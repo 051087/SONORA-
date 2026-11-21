@@ -1,20 +1,24 @@
+
 import type { Metadata } from "next";
 import { Figtree } from "next/font/google";
 import "./globals.css";
-import Sidebar from '@/components/Sidebar'
+
+import Sidebar from "@/components/Sidebar";
 import SupabaseProvider from "@/providers/SupabaseProvider";
 import UserProvider from "@/providers/UserProvider";
 import ModalProvider from "@/providers/ModalProvider";
 import ToasterProvider from "@/providers/ToasterProvider";
+
 import getSongsByUserId from "@/actions/getSongsByUserId";
 import getActiveProductsWithPrices from "@/actions/getActiveProductsWithPrices";
-import UploadPlayer from "@/components/UploadPlayer";
+
 import Player from "@/components/Player";
+
 const font = Figtree({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Spotify Premium",
-  description: "Spotify Premium for everone",
+  title: "SONORA",
+  description: "Votre expérience musicale avec SONORA.",
 };
 
 export const revalidate = 0;
@@ -28,16 +32,16 @@ export default async function RootLayout({
   const products = await getActiveProductsWithPrices();
 
   return (
-    <html lang="en">
+    <html lang="fr">
       <body className={font.className}>
         <ToasterProvider />
         <SupabaseProvider>
           <UserProvider>
-            <ModalProvider products={products}/>
+            <ModalProvider products={products} />
             <Sidebar songs={userSongs}>
               {children}
             </Sidebar>
-            <Player/>
+            <Player />
           </UserProvider>
         </SupabaseProvider>
       </body>
