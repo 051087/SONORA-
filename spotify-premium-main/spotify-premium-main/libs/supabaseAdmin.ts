@@ -125,7 +125,14 @@ const copyBillingDetailsToCustomer = async (
     await stripe.customers.update(customer, {
         name,
         phone,
-        address
+        address: {
+            line1: address.line1 ?? undefined,
+            line2: address.line2 ?? undefined,
+            city: address.city ?? undefined,
+            state: address.state ?? undefined,
+            postal_code: address.postal_code ?? undefined,
+            country: address.country ?? undefined
+        }
     });
 
     const { error } = await supabaseAdmin
