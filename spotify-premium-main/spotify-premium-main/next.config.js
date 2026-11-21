@@ -1,18 +1,19 @@
 
 /** @type {import('next').NextConfig} */
-
 const nextConfig = {
+  output: "standalone",
+
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'i.scdn.co',
-        pathname: '/image/**',
+        protocol: "https",
+        hostname: "i.scdn.co",
+        pathname: "/image/**",
       },
       {
-        protocol: 'https',
-        hostname: 'pfudyqocrsepnnfgysmi.supabase.co',
-        pathname: '/storage/v1/object/public/images/**',
+        protocol: "https",
+        hostname: "pfudyqocrsepnnfgysmi.supabase.co",
+        pathname: "/storage/v1/object/public/images/**",
       },
     ],
   },
