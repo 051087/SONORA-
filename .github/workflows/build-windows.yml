@@ -35,8 +35,20 @@ jobs:
       - name: Construire Next.js
         run: npm run build
         env:
+          NODE_ENV: production
+
+          # Supabase - variables utilisées par SONORA
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+          # Stripe
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
 
       - name: Vérifier le serveur autonome
@@ -49,6 +61,19 @@ jobs:
 
       - name: Construire SONORA Windows
         run: npx electron-builder --win nsis --x64
+
+      - name: Vérifier le fichier EXE
+        shell: pwsh
+        run: |
+          if (!(Test-Path "release")) {
+            Write-Error "Le dossier release est absent."
+            exit 1
+          }
+
+          if (!(Get-ChildItem "release" -Filter "*.exe")) {
+            Write-Error "Aucun installateur EXE n'a été généré."
+            exit 1
+          }
 
       - name: Publier SONORA Setup
         uses: actions/upload-artifact@v4
