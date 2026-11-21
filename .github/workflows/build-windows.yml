@@ -13,7 +13,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: spotify-premium-main/spotify-premium-main
+        working-directory: spotify-premium-main
 
     steps:
       - name: Télécharger SONORA
@@ -24,7 +24,20 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: spotify-premium-main/spotify-premium-main/package-lock.json
+          cache-dependency-path: spotify-premium-main/package-lock.json
+
+      - name: Vérifier les fichiers du projet
+        shell: pwsh
+        run: |
+          if (!(Test-Path "package.json")) {
+            Write-Error "package.json est introuvable."
+            exit 1
+          }
+
+          if (!(Test-Path "electron/main.cjs")) {
+            Write-Error "electron/main.cjs est introuvable. Vérifie le dossier electron."
+            exit 1
+          }
 
       - name: Installer les dépendances
         run: npm install
@@ -36,18 +49,12 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
-
-          # Supabase - variables utilisées par SONORA
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-
-          # Stripe
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
 
@@ -79,6 +86,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: SONORA-Windows-EXE
-          path: spotify-premium-main/spotify-premium-main/release/*.exe
+          path: spotify-premium-main/release/*.exe
           if-no-files-found: error
           retention-days: 14
