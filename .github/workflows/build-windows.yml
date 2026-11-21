@@ -11,6 +11,10 @@ jobs:
   build:
     runs-on: windows-latest
 
+    defaults:
+      run:
+        working-directory: spotify-premium-main/spotify-premium-main
+
     steps:
       - name: Télécharger SONORA
         uses: actions/checkout@v4
@@ -18,62 +22,38 @@ jobs:
       - name: Installer Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-
-      - name: Détecter le projet
-        id: detect
-        shell: pwsh
-        run: |
-          $files = Get-ChildItem -Path . -Filter package.json -Recurse -File |
-            Where-Object {
-              $_.FullName -notmatch '\\node_modules\\' -and
-              $_.FullName -notmatch '\\.git\\'
-            }
-
-          if ($files.Count -eq 0) {
-            Write-Error "Aucun package.json trouvé."
-            exit 1
-          }
-
-          Write-Host "Fichiers package.json trouvés :"
-          $files | ForEach-Object { Write-Host $_.FullName }
-
-          $file = $files | Select-Object -First 1
-          $dir = $file.Directory.FullName
-          $relative = Resolve-Path $dir -Relative
-
-          "project_dir=$relative" >> $env:GITHUB_OUTPUT
-
-          Write-Host "Projet sélectionné : $relative"
+          node-version: 20
+          cache: npm
+          cache-dependency-path: spotify-premium-main/spotify-premium-main/package-lock.json
 
       - name: Installer les dépendances
-        working-directory: ${{ steps.detect.outputs.project_dir }}
         run: npm install
 
-      - name: Vérifier la configuration Electron
-        working-directory: ${{ steps.detect.outputs.project_dir }}
+      - name: Vérifier Electron
+        run: npm ls electron electron-builder
+
+      - name: Construire Next.js
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+
+      - name: Vérifier le serveur autonome
         shell: pwsh
         run: |
-          $package = Get-Content package.json -Raw | ConvertFrom-Json
-
-          if (-not $package.devDependencies.electron -and
-              -not $package.dependencies.electron) {
-            Write-Error "Electron absent : ce projet nécessite une configuration desktop."
+          if (!(Test-Path ".next/standalone/server.js")) {
+            Write-Error "Le serveur Next.js autonome est absent."
             exit 1
           }
 
-          Write-Host "Electron détecté."
+      - name: Construire SONORA Windows
+        run: npx electron-builder --win nsis --x64
 
-      - name: Compiler SONORA pour Windows
-        working-directory: ${{ steps.detect.outputs.project_dir }}
-        run: npx electron-builder --win --x64
-
-      - name: Publier les fichiers EXE
+      - name: Publier SONORA Setup
         uses: actions/upload-artifact@v4
         with:
           name: SONORA-Windows-EXE
-          path: |
-            **/dist/*.exe
-            **/release/*.exe
-            **/dist/**/*.exe
+          path: spotify-premium-main/spotify-premium-main/release/*.exe
           if-no-files-found: error
+          retention-days: 14
